@@ -1,161 +1,165 @@
-import { useEffect, useState } from "react"
-import { supabase } from "./supabaseClient"
-import * as XLSX from "xlsx"
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
+import * as XLSX from "xlsx";
 
-export default function AdminPanel({ user }) {
-  const [funcionarios, setFuncionarios] = useState([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState(null)
-
-  const buscarFuncionarios = async () => {
-    setCarregando(true)
-    const { data, error } = await supabase
-      .from("funcionarios")
-      .select("id, nome_completo, cpf, setor, telefone, email, is_admin")
-
-    if (error) setErro(error.message)
-    else setFuncionarios(data)
-    setCarregando(false)
-  }
+export default function AdminPanel() {
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [resetPedidos, setResetPedidos] = useState([]);
+  const [mensagens, setMensagens] = useState([]);
 
   useEffect(() => {
-    if (user) buscarFuncionarios()
-  }, [user])
+    fetchDados();
+  }, []);
 
-  const cadastrarFuncionario = async () => {
-    const nome_completo = prompt("Nome completo:")
-    const cpf = prompt("CPF:")
-    const setor = prompt("Setor:")
-    const telefone = prompt("Telefone:")
-    const email = prompt("Email:")
-    if (!nome_completo || !cpf || !setor || !email) {
-      alert("Todos os campos são obrigatórios.")
-      return
-    }
-
-    const { error } = await supabase.from("funcionarios").insert([
-      {
-        nome_completo,
-        cpf,
-        setor,
-        telefone,
-        email,
-        is_admin: false
-      }
-    ])
-
-    if (error) alert("Erro ao cadastrar: " + error.message)
-    else {
-      alert("Funcionário cadastrado com sucesso.")
-      buscarFuncionarios()
-    }
-  }
-
-  const redefinirSenha = async (email) => {
-    alert("Redefinição de senha disponível apenas via painel seguro do Supabase Auth ou backend.")
-  }
-
-  const excluirFuncionario = async (id) => {
-    const confirmar = window.confirm("Deseja realmente excluir este funcionário?")
-    if (!confirmar) return
-
-    const { error } = await supabase
-      .from("funcionarios")
-      .delete()
-      .eq("id", id)
-
-    if (error) alert("Erro na exclusão: " + error.message)
-    else {
-      alert("Funcionário excluído com sucesso.")
-      buscarFuncionarios()
-    }
-  }
-
-  const exportarXLSX = async () => {
-    const { data: mensagens, error } = await supabase
+  const fetchDados = async () => {
+    const { data: funcData } = await supabase.from("funcionarios").select("*");
+    const { data: resetData } = await supabase
+      .from("reset_pedidos")
+      .select("user_email, funcionario_id, atendido")
+      .eq("atendido", false);
+    const { data: mensagensData } = await supabase
       .from("mensagens")
-      .select("nome, cpf, setor, tipo, mensagem, created_at, user_email")
+      .select("*");
+    setFuncionarios(funcData || []);
+    setResetPedidos(resetData || []);
+    setMensagens(mensagensData || []);
+  };
 
-    if (error) {
-      alert("Erro ao exportar mensagens: " + error.message)
-      return
+  const resetarSenha = async (email) => {
+    const novaSenha = prompt("Digite a nova senha para este funcionário:");
+    if (!novaSenha) return;
+    const { data: user } = await supabase.auth.admin.listUsers();
+    let usuario = user.users.find((u) => u.email === email);
+
+    if (!usuario) {
+      const confirmacao = window.confirm(
+        "Este usuário não está registrado no sistema de login. Deseja criar agora com a nova senha?"
+      );
+      if (!confirmacao) return;
+      const result = await supabase.auth.admin.createUser({
+        email,
+        password: novaSenha,
+      });
+      if (result.error) {
+        alert("Erro ao criar usuário: " + result.error.message);
+        return;
+      }
+      usuario = result.user;
+    } else {
+      await supabase.auth.admin.updateUser(usuario.id, { password: novaSenha });
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(mensagens)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Mensagens")
-    XLSX.writeFile(workbook, "mensagens.xlsx")
-  }
+    await supabase
+      .from("reset_pedidos")
+      .update({ atendido: true })
+      .eq("user_email", email);
+    alert("Senha atualizada com sucesso!");
+    fetchDados();
+  };
+
+  const bloquearFuncionario = async (id) => {
+    const confirmar = window.confirm("Deseja bloquear este funcionário?");
+    if (!confirmar) return;
+    await supabase
+      .from("funcionarios")
+      .update({ ativo: false })
+      .eq("id", id);
+    alert("Funcionário bloqueado");
+    fetchDados();
+  };
+
+  const exportarExcel = () => {
+    const mensagensComInfo = mensagens.map((m) => {
+      const funcionario = funcionarios.find((f) => f.email === m.user_email);
+      return {
+        Nome: funcionario?.nome_completo || "",
+        CPF: funcionario?.cpf || "",
+        Setor_Origem: funcionario?.setor || "",
+        Email: funcionario?.email || m.user_email,
+        Tipo: m.tipo,
+        Destino: m.setor,
+        Mensagem: m.mensagem,
+        Protocolo: m.protocolo || "",
+        Hash: m.hash || "",
+        Data_Hora: m.created_at,
+      };
+    });
+
+    const planilha = XLSX.utils.json_to_sheet(mensagensComInfo);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, planilha, "Mensagens");
+    XLSX.writeFile(workbook, "relatorio_mensagens.xlsx");
+  };
 
   const sair = async () => {
-    await supabase.auth.signOut()
-    window.location.reload()
-  }
-
-  if (!user) return null
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-4 bg-white shadow rounded">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-        <button onClick={sair} className="text-sm text-red-600 underline">Sair</button>
+    <div className="max-w-6xl mx-auto mt-10 p-6 bg-white shadow rounded">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">Painel Administrativo</h2>
+        <button
+          onClick={sair}
+          className="text-sm text-red-600 underline"
+        >
+          Sair
+        </button>
       </div>
 
-      {carregando && <p>Carregando funcionários...</p>}
-      {erro && <p className="text-red-600">Erro: {erro}</p>}
-
-      <div className="flex gap-4 mb-4">
+      <div className="flex justify-between mb-4">
         <button
-          onClick={exportarXLSX}
-          className="bg-green-600 text-white px-4 py-2 rounded shadow"
+          onClick={exportarExcel}
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
           Exportar para Excel
         </button>
-        <button
-          onClick={cadastrarFuncionario}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow"
-        >
-          Novo Funcionário
-        </button>
       </div>
 
-      <table className="w-full border text-sm">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2">Nome</th>
-            <th>CPF</th>
-            <th>Setor</th>
-            <th>Telefone</th>
-            <th>Email</th>
-            <th>Ações</th>
+          <tr className="bg-gray-200">
+            <th className="p-2 text-left">Nome</th>
+            <th className="p-2 text-left">Email</th>
+            <th className="p-2 text-left">Setor</th>
+            <th className="p-2 text-left">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {funcionarios.map(f => (
-            <tr key={f.id} className="border-t">
-              <td className="p-2">{f.nome_completo}</td>
-              <td>{f.cpf}</td>
-              <td>{f.setor}</td>
-              <td>{f.telefone}</td>
-              <td>{f.email}</td>
-              <td className="flex flex-col gap-1">
-                <button
-                  onClick={() => redefinirSenha(f.email)}
-                  className="text-sm text-blue-600 underline"
-                >
-                  Redefinir Senha
-                </button>
-                <button
-                  onClick={() => excluirFuncionario(f.id)}
-                  className="text-sm text-red-600 underline"
-                >
-                  Excluir
-                </button>
-              </td>
-            </tr>
-          ))}
+          {funcionarios.map((f) => {
+            const solicitouReset = resetPedidos.find(
+              (r) => r.user_email === f.email
+            );
+            return (
+              <tr key={f.id} className="border-b">
+                <td className="p-2">{f.nome_completo}</td>
+                <td className="p-2">{f.email}</td>
+                <td className="p-2">{f.setor}</td>
+                <td className="p-2 flex gap-2 items-center">
+                  {solicitouReset && (
+                    <span className="text-red-600 text-xs font-semibold">
+                      🔴 Solicitou reset de senha
+                    </span>
+                  )}
+                  <button
+                    onClick={() => resetarSenha(f.email)}
+                    className="bg-blue-600 text-white text-xs px-2 py-1 rounded"
+                  >
+                    Resetar Senha
+                  </button>
+                  <button
+                    onClick={() => bloquearFuncionario(f.id)}
+                    className="bg-red-600 text-white text-xs px-2 py-1 rounded"
+                  >
+                    Bloquear
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

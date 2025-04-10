@@ -20,7 +20,7 @@ function App() {
 
   if (loading) return <p className="text-center mt-10">Carregando...</p>
 
-  if (!user) return <Login setUser={setUser} />
+  if (!user) return <Login onLogin={setUser} />
 
   // Painel Admin (poderia ser por is_admin do banco também)
   if (user.email === 'admin@admin.com') {
