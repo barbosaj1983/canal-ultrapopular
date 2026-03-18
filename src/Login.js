@@ -1,103 +1,74 @@
-import { useState } from "react";
-import { supabase } from "./supabaseClient";
+import { useState } from "react"
+import { authAPI, saveToken, saveUser } from "./api"
+import CadastroFuncionario from "./CadastroFuncionario"
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [erro, setErro] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetConfirmado, setResetConfirmado] = useState(false);
+  const [email, setEmail]           = useState("")
+  const [password, setPassword]     = useState("")
+  const [erro, setErro]             = useState("")
+  const [loading, setLoading]       = useState(false)
+  const [resetEmail, setResetEmail] = useState("")
+  const [resetOk, setResetOk]       = useState(false)
+  const [tela, setTela]             = useState("login")
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      setErro("E-mail ou senha inválidos");
-    } else {
-      onLogin(data.user);
-    }
-  };
+    e.preventDefault(); setErro(""); setLoading(true)
+    try {
+      const data = await authAPI.login(email, password)
+      saveToken(data.access_token); saveUser(data.user); onLogin(data.user)
+    } catch (err) { setErro(err.message) }
+    finally { setLoading(false) }
+  }
 
   const handleReset = async () => {
-    if (!resetEmail) {
-      setErro("Digite seu e-mail para resetar a senha");
-      return;
-    }
-    const { data, error } = await supabase
-      .from("funcionarios")
-      .select("id")
-      .ilike("email", resetEmail.trim())
-      .limit(1)
-      .maybeSingle();
+    if (!resetEmail) { setErro("Digite seu e-mail"); return }
+    setErro(""); setLoading(true)
+    try { await authAPI.resetPedido(resetEmail); setResetOk(true) }
+    catch (err) { setErro(err.message) }
+    finally { setLoading(false) }
+  }
 
-    if (error || !data) {
-      setErro("Funcionário não encontrado");
-      return;
-    }
-
-    await supabase.from("reset_pedidos").insert([
-      {
-        funcionario_id: data.id,
-        user_email: resetEmail,
-      },
-    ]);
-    setResetConfirmado(true);
-    setErro("");
-  };
+  if (tela === "cadastro") return <CadastroFuncionario onVoltar={() => setTela("login")} />
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow rounded">
-      <h2 className="text-xl font-bold mb-4">Login</h2>
-      <form onSubmit={handleLogin} className="flex flex-col gap-3">
-        <input
-          type="email"
-          placeholder="Email"
-          className="p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          className="p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        {erro && <p className="text-red-600 text-sm">{erro}</p>}
-        <button
-          type="submit"
-          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Entrar
-        </button>
-      </form>
+      <h2 className="text-xl font-bold mb-1">Canal Ultra Popular</h2>
+      <p className="text-sm text-gray-500 mb-5">Sistema de mensagens confidenciais</p>
 
-      <div className="mt-6 border-t pt-4">
-        <h3 className="text-sm font-semibold mb-2">Esqueceu sua senha?</h3>
-        <input
-          type="email"
-          placeholder="Digite seu e-mail"
-          className="p-2 border rounded w-full"
-          value={resetEmail}
-          onChange={(e) => setResetEmail(e.target.value)}
-        />
-        <button
-          onClick={handleReset}
-          className="mt-2 w-full text-sm bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600"
-        >
-          Resetar Senha
-        </button>
-        {resetConfirmado && (
-          <p className="text-green-600 text-sm mt-2">
-            Solicitação enviada ao administrador. Aguarde retorno.
-          </p>
-        )}
-      </div>
+      {tela === "login" && (
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <input type="email" placeholder="E-mail" required className="p-2 border rounded"
+            value={email} onChange={e => setEmail(e.target.value)} />
+          <input type="password" placeholder="Senha" required className="p-2 border rounded"
+            value={password} onChange={e => setPassword(e.target.value)} />
+          {erro && <p className="text-red-600 text-sm">{erro}</p>}
+          <button type="submit" disabled={loading}
+            className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+          <div className="flex justify-between text-sm mt-1">
+            <button type="button" onClick={() => setTela("reset")} className="text-yellow-600 underline">Esqueci minha senha</button>
+            <button type="button" onClick={() => setTela("cadastro")} className="text-blue-600 underline">Criar cadastro</button>
+          </div>
+        </form>
+      )}
+
+      {tela === "reset" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-gray-600">Digite seu e-mail para solicitar redefinição ao administrador.</p>
+          <input type="email" placeholder="Seu e-mail" className="p-2 border rounded"
+            value={resetEmail} onChange={e => setResetEmail(e.target.value)} />
+          {erro && <p className="text-red-600 text-sm">{erro}</p>}
+          {resetOk
+            ? <p className="text-green-600 text-sm">Solicitação enviada! O administrador irá redefinir sua senha em breve.</p>
+            : <button onClick={handleReset} disabled={loading}
+                className="bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600 disabled:opacity-50">
+                {loading ? "Enviando..." : "Solicitar reset"}
+              </button>
+          }
+          <button onClick={() => { setTela("login"); setErro(""); setResetOk(false) }} className="text-sm text-gray-500 underline">Voltar ao login</button>
+        </div>
+      )}
     </div>
-  );
+  )
 }

@@ -1,141 +1,52 @@
 import { useState } from "react"
-import { supabase } from "./supabaseClient"
+import { authAPI } from "./api"
 
-const setores = [
-  "Atendimento", "Caixa", "Estoque", "Perfumaria", "Financeiro", "RH", "Farmacêutico"
-]
+const SETORES = ["Atendimento","Conferencia de Caixa","Estoque","Perfumaria","Financeiro","RH","Farmacêutico","TI","Supervisao","Diretoria","Callcenter","Manutencao","Gerência"]
 
-export default function CadastroFuncionario({ onCadastroSucesso }) {
-  const [form, setForm] = useState({
-    nome_completo: "",
-    cpf: "",
-    setor: "",
-    telefone: "",
-    email: "",
-    senha: ""
-  })
+export default function CadastroFuncionario({ onVoltar }) {
+  const [form, setForm]       = useState({ nome_completo:"", cpf:"", setor:"", telefone:"", email:"", password:"" })
+  const [erro, setErro]       = useState("")
+  const [ok, setOk]           = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const [erro, setErro] = useState("")
-  const [ok, setOk] = useState(false)
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
+  const handle = e => setForm(p => ({...p, [e.target.name]: e.target.value}))
 
   const handleCadastro = async (e) => {
-    e.preventDefault()
-    setErro("")
-
-    // 1. Criar conta no Supabase Auth
-    const { data: auth, error: authError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.senha
-    })
-
-    if (authError) {
-  if (authError.message.includes("User already registered")) {
-    setErro("Este e-mail já está registrado. Volte para a tela de login e clique em 'Esqueci minha senha'.")
-  } else {
-    setErro("Erro ao criar conta: " + authError.message)
-  }
-  return
-}
-
-    // 2. Inserir na tabela `funcionarios`
-    const { error: insertError } = await supabase.from("funcionarios").insert([
-      {
-        nome_completo: form.nome_completo,
-        cpf: form.cpf,
-        setor: form.setor,
-        telefone: form.telefone,
-        email: form.email,
-        is_admin: false,
-      }
-    ])
-
-    if (insertError) {
-      setErro("Erro ao salvar dados: " + insertError.message)
-    } else {
-      setOk(true)
-      if (onCadastroSucesso) onCadastroSucesso()
-    }
+    e.preventDefault(); setErro(""); setLoading(true)
+    try { await authAPI.cadastro(form); setOk(true) }
+    catch (err) { setErro(err.message) }
+    finally { setLoading(false) }
   }
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow rounded">
-      <h2 className="text-xl font-bold mb-4">Cadastro de Funcionário</h2>
-      {ok && <p className="text-green-600 mb-4">Cadastro feito! Verifique seu e-mail e faça login.</p>}
-      {erro && <p className="text-red-600 mb-4">{erro}</p>}
-
-      <form onSubmit={handleCadastro} className="flex flex-col gap-3">
-
-        <input
-          type="text"
-          name="nome_completo"
-          placeholder="Nome completo"
-          value={form.nome_completo}
-          onChange={handleChange}
-          required
-          className="p-2 border rounded"
-        />
-
-        <input
-          type="text"
-          name="cpf"
-          placeholder="CPF"
-          value={form.cpf}
-          onChange={handleChange}
-          required
-          className="p-2 border rounded"
-        />
-
-        <select
-          name="setor"
-          value={form.setor}
-          onChange={handleChange}
-          required
-          className="p-2 border rounded"
-        >
-          <option value="">Selecione o setor</option>
-          {setores.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-
-        <input
-          type="text"
-          name="telefone"
-          placeholder="Telefone"
-          value={form.telefone}
-          onChange={handleChange}
-          className="p-2 border rounded"
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder="E-mail"
-          value={form.email}
-          onChange={handleChange}
-          required
-          className="p-2 border rounded"
-        />
-
-        <input
-          type="password"
-          name="senha"
-          placeholder="Senha"
-          value={form.senha}
-          onChange={handleChange}
-          required
-          className="p-2 border rounded"
-        />
-
-        <button className="bg-blue-600 text-white p-2 rounded" type="submit">
-          Cadastrar
-        </button>
-      </form>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Cadastro de Funcionário</h2>
+        <button onClick={onVoltar} className="text-sm text-gray-500 underline">Voltar ao login</button>
+      </div>
+      {ok ? (
+        <div className="text-center py-6">
+          <p className="text-green-600 font-semibold mb-2">Cadastro realizado!</p>
+          <p className="text-sm text-gray-600 mb-4">Aguarde o administrador ativar sua conta.</p>
+          <button onClick={onVoltar} className="bg-blue-600 text-white px-4 py-2 rounded">Ir para login</button>
+        </div>
+      ) : (
+        <form onSubmit={handleCadastro} className="flex flex-col gap-3">
+          <input name="nome_completo" type="text" placeholder="Nome completo" required className="p-2 border rounded" value={form.nome_completo} onChange={handle} />
+          <input name="cpf" type="text" placeholder="CPF" required className="p-2 border rounded" value={form.cpf} onChange={handle} />
+          <select name="setor" required className="p-2 border rounded" value={form.setor} onChange={handle}>
+            <option value="">Selecione seu setor</option>
+            {SETORES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+          <input name="telefone" type="text" placeholder="Telefone (opcional)" className="p-2 border rounded" value={form.telefone} onChange={handle} />
+          <input name="email" type="email" placeholder="E-mail" required className="p-2 border rounded" value={form.email} onChange={handle} />
+          <input name="password" type="password" placeholder="Senha (mínimo 6 caracteres)" required minLength={6} className="p-2 border rounded" value={form.password} onChange={handle} />
+          {erro && <p className="text-red-600 text-sm">{erro}</p>}
+          <button type="submit" disabled={loading} className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50">
+            {loading ? "Cadastrando..." : "Cadastrar"}
+          </button>
+        </form>
+      )}
     </div>
   )
 }

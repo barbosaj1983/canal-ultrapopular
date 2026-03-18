@@ -1,38 +1,24 @@
-import { useEffect, useState } from 'react'
-import { supabase } from './supabaseClient'
-import Login from './Login'
-import Formulario from './Formulario'
-import AdminPanel from './AdminPanel'
+import { useState, useEffect } from "react"
+import { getUser, removeToken, removeUser } from "./api"
+import Login from "./Login"
+import Formulario from "./Formulario"
+import AdminPanel from "./AdminPanel"
 
 function App() {
-  const [user, setUser] = useState(null)
+  const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Verifica se já tem usuário logado
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) setUser(data.user)
-      setLoading(false)
-    }
-    getUser()
+    setUser(getUser())
+    setLoading(false)
   }, [])
 
-  if (loading) return <p className="text-center mt-10">Carregando...</p>
+  const handleLogout = () => { removeToken(); removeUser(); setUser(null) }
 
-  if (!user) return <Login onLogin={setUser} />
-
-  // Painel Admin (poderia ser por is_admin do banco também)
-  if (user.email === 'admin@admin.com') {
-    return <AdminPanel user={user} />
-  }
-
-  // Funcionário comum → formulário de mensagens
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <Formulario user={user} />
-    </div>
-  )
+  if (loading) return <p className="text-center mt-10 text-gray-500">Carregando...</p>
+  if (!user)   return <Login onLogin={setUser} />
+  if (user.is_admin) return <AdminPanel user={user} onLogout={handleLogout} />
+  return <div className="min-h-screen bg-gray-100"><Formulario user={user} onLogout={handleLogout} /></div>
 }
 
 export default App
