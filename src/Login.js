@@ -3,39 +3,28 @@ import { authAPI, saveToken, saveUser } from "./api"
 import CadastroFuncionario from "./CadastroFuncionario"
 
 const LOGOS = [
-  { nome: "Ultrapopular", arquivo: "/logos/logo-ultrapopular.png" },
-  { nome: "Bobs",         arquivo: "/logos/logo-bobs.png" },
-  { nome: "Fini",         arquivo: "/logos/logo-fini.png" },
+  { nome: "Ultra Popular", arquivo: "/logos/logo-ultrapopular.jpg" },
+  { nome: "Bobs",          arquivo: "/logos/logo-bobs.jpg" },
+  { nome: "Fini",          arquivo: "/logos/logo-fini.jpg" },
 ]
 
-function LogoBar() {
-  return (
-    <div className="flex justify-center gap-4 mb-6">
-      {LOGOS.map(({ nome, arquivo }) => (
-        <LogoPlaceholder key={nome} nome={nome} arquivo={arquivo} />
-      ))}
-    </div>
-  )
-}
-
-function LogoPlaceholder({ nome, arquivo }) {
+function LogoItem({ nome, arquivo }) {
   const [erro, setErro] = useState(false)
   return (
-    <div className="w-28 h-16 bg-white rounded-xl shadow border-2 border-dashed border-red-200 flex flex-col items-center justify-center gap-1 overflow-hidden">
+    <div
+      className="bg-white rounded-2xl shadow-md overflow-hidden flex items-center justify-center"
+      style={{ width: 100, height: 56 }}>
       {!erro ? (
         <img
           src={arquivo}
           alt={nome}
-          className="max-h-14 max-w-full object-contain px-2"
+          className="w-full h-full object-contain"
           onError={() => setErro(true)}
         />
       ) : (
-        <>
-          <svg className="w-5 h-5 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span className="text-xs font-bold text-red-300 uppercase tracking-widest">{nome}</span>
-        </>
+        <span className="text-xs font-bold text-gray-400 text-center px-1 leading-tight">
+          {nome}
+        </span>
       )}
     </div>
   )
@@ -72,9 +61,7 @@ export default function Login({ onLogin, avisoInatividade = "" }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-red-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md flex flex-col items-center">
-
-        <LogoBar />
+      <div className="w-full max-w-md">
 
         {/* Aviso de logout por inatividade */}
         {avisoInatividade && (
@@ -88,13 +75,14 @@ export default function Login({ onLogin, avisoInatividade = "" }) {
 
         <div className="bg-white rounded-2xl shadow-2xl w-full overflow-hidden">
 
-          {/* Header */}
-          <div className="bg-gradient-to-r from-red-800 to-red-600 px-8 py-8 text-center">
-            <div className="w-14 h-14 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+          {/* Header vermelho com logos */}
+          <div className="bg-gradient-to-r from-red-800 to-red-600 px-6 py-7 text-center">
+
+            {/* Logos das 3 empresas */}
+            <div className="flex items-center justify-center gap-3 mb-5">
+              {LOGOS.map(l => <LogoItem key={l.nome} {...l} />)}
             </div>
+
             <h1 className="text-white text-xl font-bold">Fale com a Diretoria</h1>
             <p className="text-red-200 text-sm mt-1">Sistema de mensagens confidenciais</p>
           </div>
