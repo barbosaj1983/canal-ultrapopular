@@ -45,14 +45,14 @@ export default function Formulario({ user, onLogout }) {
   const imprimirPDF = () => {
     const linhas = [
       '<div style="font-family:Arial,sans-serif;padding:32px;max-width:620px;margin:0 auto">',
-      '<div style="background:#1e3a8a;color:white;padding:18px 24px;border-radius:8px 8px 0 0;margin-bottom:0">',
+      '<div style="background:#991b1b;color:white;padding:18px 24px;border-radius:8px 8px 0 0;margin-bottom:0">',
       '<h1 style="margin:0;font-size:17px">PROTOCOLO OFICIAL DE MENSAGEM CONFIDENCIAL</h1>',
-      '<p style="margin:3px 0 0;font-size:11px;opacity:.8">Drogarias Ultra Popular — Sistema de Comunicacao Interna</p>',
+      '<p style="margin:3px 0 0;font-size:11px;opacity:.8">Fale com a Diretoria — Sistema de Comunicacao Interna</p>',
       '</div>',
-      '<div style="border:2px solid #1e3a8a;border-top:none;padding:20px;border-radius:0 0 8px 8px">',
+      '<div style="border:2px solid #991b1b;border-top:none;padding:20px;border-radius:0 0 8px 8px">',
       '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">',
       '<tr><td style="padding:7px 10px;background:#f1f5f9;font-weight:bold;border:1px solid #cbd5e1;width:40%">Protocolo</td>',
-      '<td style="padding:7px 10px;border:1px solid #cbd5e1;font-family:monospace;font-weight:bold;color:#1e3a8a">' + protocolo + '</td></tr>',
+      '<td style="padding:7px 10px;border:1px solid #cbd5e1;font-family:monospace;font-weight:bold;color:#991b1b">' + protocolo + '</td></tr>',
       '<tr><td style="padding:7px 10px;background:#f1f5f9;font-weight:bold;border:1px solid #cbd5e1">Data e Hora</td>',
       '<td style="padding:7px 10px;border:1px solid #cbd5e1">' + dataEnvio + '</td></tr>',
       '<tr><td style="padding:7px 10px;background:#f1f5f9;font-weight:bold;border:1px solid #cbd5e1">Nome</td>',
@@ -74,7 +74,6 @@ export default function Formulario({ user, onLogout }) {
       '<p style="margin:0;font-size:11px;color:#14532d">O remetente declarou expressamente que as informacoes acima sao verdadeiras e de sua inteira responsabilidade no momento do envio.</p>',
       '</div>',
       '<div style="border-top:1px solid #e2e8f0;padding-top:12px;font-size:10px;color:#64748b">',
-      '<p style="margin:0 0 2px"><strong>Verificacao:</strong> canal-ultrapopular.vercel.app/verificar/' + protocolo + '</p>',
       '<p style="margin:0;font-style:italic">Documento com validade como registro oficial de comunicacao interna.</p>',
       '</div>',
       '</div></div>'
@@ -86,13 +85,13 @@ export default function Formulario({ user, onLogout }) {
   }
 
   const novaMensagem = () => {
-    setEnviado(false); setMensagem(""); setSetor(""); setConfirmado(false)
+    setEnviado(false); setMensagem(""); setSetor(""); setConfirmado(false); setCountdown(120)
   }
 
   // ── Tela pos-envio ───────────────────────────────────────────
   if (enviado) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-red-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-t-4 border-green-500">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -104,10 +103,10 @@ export default function Formulario({ user, onLogout }) {
             <p className="text-gray-500 text-sm mt-1">Protocolo oficial gerado com sucesso</p>
           </div>
 
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-3 text-center">
-            <p className="text-xs text-blue-500 font-bold uppercase tracking-widest mb-1">Numero do Protocolo</p>
-            <p className="font-mono text-2xl font-bold text-blue-800">{protocolo}</p>
-            <p className="text-xs text-blue-500 mt-1">{dataEnvio}</p>
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-3 text-center">
+            <p className="text-xs text-red-500 font-bold uppercase tracking-widest mb-1">Numero do Protocolo</p>
+            <p className="font-mono text-2xl font-bold text-red-800">{protocolo}</p>
+            <p className="text-xs text-red-500 mt-1">{dataEnvio}</p>
           </div>
 
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
@@ -126,7 +125,7 @@ export default function Formulario({ user, onLogout }) {
 
           <div className="flex flex-col gap-3">
             <button onClick={imprimirPDF}
-              className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+              className="w-full bg-red-700 hover:bg-red-800 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
               </svg>
@@ -147,17 +146,17 @@ export default function Formulario({ user, onLogout }) {
 
   // ── Formulario principal ─────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-red-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-5">
+        <div className="bg-gradient-to-r from-red-800 to-red-600 px-6 py-5">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-white font-bold text-lg tracking-tight">Canal Ultra Popular</h1>
-              <p className="text-blue-200 text-xs mt-0.5">Sistema de mensagens confidenciais</p>
+              <h1 className="text-white font-bold text-lg tracking-tight">Fale com a Diretoria</h1>
+              <p className="text-red-200 text-xs mt-0.5">Sistema de mensagens confidenciais</p>
             </div>
-            <button onClick={onLogout} className="text-blue-300 hover:text-white text-xs underline transition-colors">
+            <button onClick={onLogout} className="text-red-300 hover:text-white text-xs underline transition-colors">
               Sair
             </button>
           </div>
@@ -167,7 +166,7 @@ export default function Formulario({ user, onLogout }) {
             </div>
             <div>
               <p className="text-white text-sm font-semibold">{user.nome_completo}</p>
-              <p className="text-blue-200 text-xs">{user.setor}</p>
+              <p className="text-red-200 text-xs">{user.setor}</p>
             </div>
           </div>
         </div>
@@ -198,7 +197,7 @@ export default function Formulario({ user, onLogout }) {
                   <button key={val} type="button" onClick={() => setTipo(val)}
                     className={"py-2 rounded-lg text-sm font-semibold border-2 transition-all " +
                       (tipo === val
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        ? "border-red-500 bg-red-50 text-red-700"
                         : "border-gray-200 text-gray-500 hover:border-gray-300")}>
                     {label}
                   </button>
@@ -210,7 +209,7 @@ export default function Formulario({ user, onLogout }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Setor destinatario</label>
               <select
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-blue-400 focus:outline-none bg-white"
+                className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-red-400 focus:outline-none bg-white"
                 value={setorDestino} onChange={e => setSetor(e.target.value)} required>
                 <option value="">Selecione o setor...</option>
                 {SETORES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -221,7 +220,7 @@ export default function Formulario({ user, onLogout }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Mensagem</label>
               <textarea
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-blue-400 focus:outline-none resize-none"
+                className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-red-400 focus:outline-none resize-none"
                 rows={5}
                 placeholder="Descreva com clareza. Seja objetivo e inclua datas, locais e nomes se necessario."
                 value={mensagem} onChange={e => setMensagem(e.target.value)} required />
@@ -246,7 +245,7 @@ export default function Formulario({ user, onLogout }) {
             {/* Checkbox */}
             <label className="flex items-start gap-3 cursor-pointer bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
               <input type="checkbox" checked={confirmado} onChange={e => setConfirmado(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0 cursor-pointer" />
+                className="mt-0.5 w-4 h-4 accent-red-600 flex-shrink-0 cursor-pointer" />
               <span className="text-sm text-yellow-900 leading-relaxed">
                 <strong>Declaro que as informacoes acima sao verdadeiras.</strong> Estou ciente de que mensagens falsas ou de ma-fe podem acarretar responsabilidade legal.
               </span>

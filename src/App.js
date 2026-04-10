@@ -8,10 +8,11 @@ const INATIVIDADE_MS  = 15 * 60 * 1000  // 15 minutos
 const AVISO_ANTES_MS  =  2 * 60 * 1000  //  2 minutos antes
 
 export default function App() {
-  const [user, setUser]         = useState(null)
-  const [loading, setLoading]   = useState(true)
-  const [aviso, setAviso]       = useState(false)
-  const [segundos, setSegundos] = useState(120)
+  const [user, setUser]               = useState(null)
+  const [loading, setLoading]         = useState(true)
+  const [aviso, setAviso]             = useState(false)
+  const [segundos, setSegundos]       = useState(120)
+  const [avisoLogin, setAvisoLogin]   = useState("")   // mensagem pos-logout
   const timerRef  = useRef(null)
   const avisoRef  = useRef(null)
   const countRef  = useRef(null)
@@ -23,7 +24,7 @@ export default function App() {
     removeToken(); removeUser()
     setUser(null); setAviso(false)
     if (motivo === "inatividade") {
-      alert("Voce foi desconectado por inatividade (15 minutos sem uso).")
+      setAvisoLogin("Voce foi desconectado automaticamente por 15 minutos de inatividade.")
     }
   }, [])
 
@@ -70,11 +71,11 @@ export default function App() {
     setLoading(false)
   }, [])
 
-  const handleLogin  = (u) => { setUser(u); resetarTimer() }
+  const handleLogin  = (u) => { setAvisoLogin(""); setUser(u); resetarTimer() }
   const handleLogout = ()  => logout("manual")
 
   if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-red-50 flex items-center justify-center">
       <p className="text-gray-500">Carregando...</p>
     </div>
   )
@@ -97,7 +98,7 @@ export default function App() {
             <div className="text-4xl font-bold text-red-600 mb-6">{segundos}s</div>
             <button
               onClick={() => { resetarTimer(); setAviso(false) }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-colors">
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors">
               Continuar conectado
             </button>
             <button onClick={() => logout("manual")}
@@ -108,7 +109,7 @@ export default function App() {
         </div>
       )}
 
-      {!user && <Login onLogin={handleLogin} />}
+      {!user && <Login onLogin={handleLogin} avisoInatividade={avisoLogin} />}
       {user && user.is_admin && <AdminPanel user={user} onLogout={handleLogout} />}
       {user && !user.is_admin && <Formulario user={user} onLogout={handleLogout} />}
     </>

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr
 from database import get_pool
 from auth import verify_password, hash_password, create_token
+from main import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,7 +28,8 @@ class ResetPedidoInput(BaseModel):
     email: EmailStr
 
 @router.post("/login")
-async def login(body: LoginInput):
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginInput):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -56,6 +58,8 @@ async def login(body: LoginInput):
 
 @router.post("/cadastro", status_code=201)
 async def cadastro(body: CadastroInput):
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Senha deve ter no minimo 6 caracteres")
     pool = await get_pool()
     async with pool.acquire() as conn:
         existe = await conn.fetchval(

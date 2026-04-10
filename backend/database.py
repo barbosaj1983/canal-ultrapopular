@@ -16,6 +16,7 @@ async def get_pool() -> asyncpg.Pool:
             min_size=2,
             max_size=10,
             command_timeout=30,
+            ssl="require",
         )
     return _pool
 

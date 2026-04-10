@@ -10,7 +10,11 @@ from database import get_pool
 
 load_dotenv()
 
-SECRET_KEY  = os.getenv("SECRET_KEY", "troque-esta-chave-em-producao")
+SECRET_KEY  = os.getenv("SECRET_KEY", "")
+if not SECRET_KEY or SECRET_KEY == "troque-esta-chave-em-producao":
+    import sys
+    if "pytest" not in sys.modules:
+        raise RuntimeError("SECRET_KEY nao configurada. Defina a variavel de ambiente SECRET_KEY antes de iniciar.")
 ALGORITHM   = "HS256"
 TOKEN_HOURS = int(os.getenv("TOKEN_HOURS", "8"))
 

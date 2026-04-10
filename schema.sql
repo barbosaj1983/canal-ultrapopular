@@ -49,7 +49,10 @@ CREATE INDEX IF NOT EXISTS idx_logs_timestamp    ON logs(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_reset_email       ON reset_pedidos(user_email);
 CREATE INDEX IF NOT EXISTS idx_reset_atendido    ON reset_pedidos(atendido);
 
-INSERT INTO funcionarios (nome_completo, cpf, setor, email, password_hash, is_admin)
-VALUES ('Administrador','000.000.000-00','Diretoria','admin@ultrapopular.com',
-'$2b$12$GYZmOTRA3hCZwfVKAkclteZ5Tj6o4cWBZ3COLsAoVhaDHPi2Rhe.K',TRUE)
-ON CONFLICT (email) DO NOTHING;
+-- IMPORTANTE: Crie o admin via script seguro (setup_neon.py) ou pelo painel do banco.
+-- Nunca insira hashes de senha diretamente neste arquivo versionado.
+-- Exemplo de comando para criar admin via psql:
+-- INSERT INTO funcionarios (nome_completo, cpf, setor, email, password_hash, is_admin)
+-- VALUES ('Administrador','000.000.000-00','Diretoria','admin@ultrapopular.com',
+--         crypt('SENHA_AQUI', gen_salt('bf')), TRUE)
+-- ON CONFLICT (email) DO NOTHING;
