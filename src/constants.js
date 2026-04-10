@@ -1,3 +1,5 @@
+export const EMPRESAS = ["Ultrapopular", "Bobs", "Fini"]
+
 export const SETORES = [
   "Atendimento", "Conferencia de Caixa", "Estoque", "Perfumaria",
   "Financeiro", "RH", "Farmaceutico", "TI",

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS funcionarios (
     nome_completo TEXT        NOT NULL,
     cpf           TEXT        NOT NULL,
     setor         TEXT        NOT NULL,
+    empresa       TEXT        NOT NULL DEFAULT 'Ultrapopular',
     telefone      TEXT,
     email         TEXT        UNIQUE NOT NULL,
     password_hash TEXT        NOT NULL,
@@ -14,15 +15,16 @@ CREATE TABLE IF NOT EXISTS funcionarios (
 );
 
 CREATE TABLE IF NOT EXISTS mensagens (
-    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    tipo       TEXT        NOT NULL CHECK (tipo IN ('sugestao','reclamacao','denuncia')),
-    setor      TEXT        NOT NULL,
-    mensagem   TEXT        NOT NULL,
-    nome       TEXT        NOT NULL,
-    user_email TEXT        NOT NULL,
-    protocolo  TEXT        UNIQUE,
-    hash       TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    tipo         TEXT        NOT NULL CHECK (tipo IN ('sugestao','reclamacao','denuncia')),
+    setor        TEXT        NOT NULL,
+    mensagem     TEXT        NOT NULL,
+    nome         TEXT        NOT NULL,
+    user_email   TEXT        NOT NULL,
+    empresa      TEXT,
+    protocolo    TEXT        UNIQUE,
+    hash         TEXT,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS reset_pedidos (

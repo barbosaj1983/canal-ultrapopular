@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { adminAPI } from "./api"
-import { SETORES, TIPO_BADGE } from "./constants"
+import { SETORES, TIPO_BADGE, EMPRESAS } from "./constants"
 import * as XLSX from "xlsx"
 
 // ── Modais reutilizaveis ──────────────────────────────────────────
@@ -79,6 +79,10 @@ function ModalMensagem({ mensagem, onClose }) {
             <p className="text-gray-700">{new Date(mensagem.created_at).toLocaleString("pt-BR")}</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
+            <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Empresa</p>
+            <span className="text-sm font-semibold text-red-700">{mensagem.empresa || "—"}</span>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-400 font-semibold uppercase mb-0.5">Remetente</p>
             <p className="font-medium text-gray-800">{mensagem.nome}</p>
             <p className="text-xs text-gray-500">{mensagem.user_email}</p>
@@ -121,7 +125,7 @@ export default function AdminPanel({ user, onLogout }) {
   const [mensagens, setMensagens]       = useState([])
   const [logs, setLogs]                 = useState([])
   const [resets, setResets]             = useState([])
-  const [filtros, setFiltros]           = useState({ tipo:"", setor:"", data:"" })
+  const [filtros, setFiltros]           = useState({ tipo:"", setor:"", data:"", empresa:"" })
   const [loading, setLoading]           = useState(true)
   const [aba, setAba]                   = useState("mensagens")
   const [erroFiltro, setErroFiltro]     = useState("")
@@ -205,6 +209,7 @@ export default function AdminPanel({ user, onLogout }) {
   const exportarExcel = () => {
     const ws = XLSX.utils.json_to_sheet(mensagens.map(m => ({
       Data:            new Date(m.created_at).toLocaleString("pt-BR"),
+      Empresa:         m.empresa || "—",
       Nome:            m.nome,
       Email:           m.user_email,
       "Setor Origem":  m.setor_origem || "",
@@ -350,6 +355,11 @@ export default function AdminPanel({ user, onLogout }) {
                   Exportar Excel
                 </button>
                 <select className="border border-gray-200 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-red-400"
+                  value={filtros.empresa} onChange={e => handleFiltro({ empresa: e.target.value })}>
+                  <option value="">Todas as empresas</option>
+                  {EMPRESAS.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                </select>
+                <select className="border border-gray-200 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-red-400"
                   value={filtros.tipo} onChange={e => handleFiltro({ tipo: e.target.value })}>
                   <option value="">Todos os tipos</option>
                   <option value="sugestao">Sugestao</option>
@@ -370,7 +380,7 @@ export default function AdminPanel({ user, onLogout }) {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      {["Data","Nome","Origem","Destino","Tipo","Mensagem","Protocolo"].map(h => (
+                      {["Data","Empresa","Nome","Origem","Destino","Tipo","Mensagem","Protocolo"].map(h => (
                         <th key={h} className="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
@@ -385,6 +395,9 @@ export default function AdminPanel({ user, onLogout }) {
                         onClick={() => setModalMensagem(m)}
                         title="Clique para ver mensagem completa">
                         <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{new Date(m.created_at).toLocaleString("pt-BR")}</td>
+                        <td className="px-3 py-3">
+                          <span className="text-xs font-semibold bg-red-50 text-red-700 px-2 py-1 rounded-full">{m.empresa || "—"}</span>
+                        </td>
                         <td className="px-3 py-3 font-medium text-gray-800">{m.nome}</td>
                         <td className="px-3 py-3 text-gray-500 text-xs">{m.setor_origem || "—"}</td>
                         <td className="px-3 py-3 text-gray-500 text-xs">{m.setor}</td>

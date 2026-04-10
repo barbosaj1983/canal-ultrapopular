@@ -36,9 +36,9 @@ async def enviar_mensagem(body: MensagemInput, request: Request, user: dict = De
             )
             protocolo = f"#{data_str}-{str((count or 0) + 1).zfill(4)}"
             await conn.execute(
-                "INSERT INTO mensagens (tipo, setor, mensagem, nome, user_email, protocolo, hash) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+                "INSERT INTO mensagens (tipo, setor, mensagem, nome, user_email, empresa, protocolo, hash) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
                 body.tipo, body.setor_destino, body.mensagem,
-                user["nome_completo"], user["email"], protocolo, hash_msg
+                user["nome_completo"], user["email"], user.get("empresa"), protocolo, hash_msg
             )
             await conn.execute(
                 "INSERT INTO logs (user_id, acao, status, ip) VALUES ($1,'enviou mensagem','enviado',$2)",

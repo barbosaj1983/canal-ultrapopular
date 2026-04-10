@@ -20,6 +20,7 @@ class CadastroInput(BaseModel):
     nome_completo: str
     cpf: str
     setor: str
+    empresa: str
     telefone: str = ""
     email: EmailStr
     password: str
@@ -33,7 +34,7 @@ async def login(request: Request, body: LoginInput):
     pool = await get_pool()
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT id, email, nome_completo, setor, cpf, password_hash, is_admin, ativo FROM funcionarios WHERE email = $1",
+            "SELECT id, email, nome_completo, setor, empresa, cpf, password_hash, is_admin, ativo FROM funcionarios WHERE email = $1",
             body.email.lower().strip()
         )
     if not row:
@@ -51,15 +52,20 @@ async def login(request: Request, body: LoginInput):
             "email":         row["email"],
             "nome_completo": row["nome_completo"],
             "setor":         row["setor"],
+            "empresa":       row["empresa"] or "Ultrapopular",
             "cpf":           row["cpf"],
             "is_admin":      row["is_admin"],
         }
     }
 
+EMPRESAS = ["Ultrapopular", "Bobs", "Fini"]
+
 @router.post("/cadastro", status_code=201)
 async def cadastro(body: CadastroInput):
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Senha deve ter no minimo 6 caracteres")
+    if body.empresa not in EMPRESAS:
+        raise HTTPException(status_code=400, detail="Empresa invalida")
     pool = await get_pool()
     async with pool.acquire() as conn:
         existe = await conn.fetchval(
@@ -68,8 +74,8 @@ async def cadastro(body: CadastroInput):
         if existe:
             raise HTTPException(status_code=409, detail="Este e-mail ja esta cadastrado.")
         await conn.execute(
-            "INSERT INTO funcionarios (nome_completo, cpf, setor, telefone, email, password_hash, is_admin) VALUES ($1,$2,$3,$4,$5,$6,FALSE)",
-            body.nome_completo.strip(), body.cpf.strip(), body.setor,
+            "INSERT INTO funcionarios (nome_completo, cpf, setor, empresa, telefone, email, password_hash, is_admin) VALUES ($1,$2,$3,$4,$5,$6,$7,FALSE)",
+            body.nome_completo.strip(), body.cpf.strip(), body.setor, body.empresa,
             body.telefone.strip(), body.email.lower().strip(), hash_password(body.password)
         )
     return {"message": "Cadastro realizado com sucesso."}

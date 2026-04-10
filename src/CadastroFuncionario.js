@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { authAPI } from "./api"
-import { SETORES } from "./constants"
+import { SETORES, EMPRESAS } from "./constants"
 
 function formatCPF(value) {
   return value
@@ -13,7 +13,7 @@ function formatCPF(value) {
 
 export default function CadastroFuncionario({ onVoltar }) {
   const [form, setForm]       = useState({
-    nome_completo: "", cpf: "", setor: "",
+    nome_completo: "", cpf: "", setor: "", empresa: "",
     telefone: "", email: "", password: ""
   })
   const [erro, setErro]       = useState("")
@@ -31,6 +31,7 @@ export default function CadastroFuncionario({ onVoltar }) {
     e.preventDefault()
     const cpfLimpo = form.cpf.replace(/\D/g, "")
     if (cpfLimpo.length !== 11) { setErro("CPF invalido. Digite os 11 digitos."); return }
+    if (!form.empresa) { setErro("Selecione a empresa."); return }
     if (form.password.length < 6) { setErro("Senha deve ter no minimo 6 caracteres."); return }
     setErro(""); setLoading(true)
     try {
@@ -97,6 +98,16 @@ export default function CadastroFuncionario({ onVoltar }) {
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:border-red-400 focus:outline-none transition-colors"
                     value={form.telefone} onChange={handle} />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Empresa</label>
+                <select name="empresa" required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:border-red-400 focus:outline-none transition-colors bg-white"
+                  value={form.empresa} onChange={handle}>
+                  <option value="">Selecione sua empresa</option>
+                  {EMPRESAS.map(e => <option key={e} value={e}>{e}</option>)}
+                </select>
               </div>
 
               <div>

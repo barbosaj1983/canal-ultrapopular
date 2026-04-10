@@ -18,7 +18,7 @@ async def listar_funcionarios(admin=Depends(require_admin)):
     pool = await get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT id, nome_completo, email, setor, cpf, telefone, is_admin, ativo, created_at FROM funcionarios ORDER BY nome_completo"
+            "SELECT id, nome_completo, email, setor, empresa, cpf, telefone, is_admin, ativo, created_at FROM funcionarios ORDER BY nome_completo"
         )
     return [dict(r) for r in rows]
 
@@ -67,18 +67,28 @@ async def resetar_senha(body: ResetSenhaInput, admin=Depends(require_admin)):
     return {"message": "Senha atualizada com sucesso"}
 
 @router.get("/mensagens")
-async def listar_mensagens(tipo: str="", setor: str="", data: str="", admin=Depends(require_admin)):
+async def listar_mensagens(
+    tipo: str = "", setor: str = "", data: str = "", empresa: str = "",
+    admin=Depends(require_admin)
+):
     pool = await get_pool()
     conditions = ["1=1"]
     params = []
     i = 1
-    if tipo:  conditions.append(f"m.tipo=${i}");              params.append(tipo);  i+=1
-    if setor: conditions.append(f"m.setor=${i}");             params.append(setor); i+=1
-    if data:  conditions.append(f"m.created_at::date=${i}::date"); params.append(data);  i+=1
+    if tipo:    conditions.append(f"m.tipo=${i}");               params.append(tipo);    i += 1
+    if setor:   conditions.append(f"m.setor=${i}");              params.append(setor);   i += 1
+    if data:    conditions.append(f"m.created_at::date=${i}::date"); params.append(data); i += 1
+    if empresa: conditions.append(f"m.empresa=${i}");            params.append(empresa); i += 1
     where = " AND ".join(conditions)
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            f"SELECT m.id,m.tipo,m.setor,m.mensagem,m.nome,m.user_email,m.protocolo,m.hash,m.created_at,f.setor AS setor_origem FROM mensagens m LEFT JOIN funcionarios f ON f.email=m.user_email WHERE {where} ORDER BY m.created_at DESC",
+            f"""SELECT m.id, m.tipo, m.setor, m.mensagem, m.nome, m.user_email,
+                       m.empresa, m.protocolo, m.hash, m.created_at,
+                       f.setor AS setor_origem
+                FROM mensagens m
+                LEFT JOIN funcionarios f ON f.email = m.user_email
+                WHERE {where}
+                ORDER BY m.created_at DESC""",
             *params
         )
     return [dict(r) for r in rows]
